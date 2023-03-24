@@ -1,78 +1,51 @@
-import React, { useState, useEffect } from 'react';
-import { ContactForm } from './ContactForm/ContactForm';
-import { ContactList } from './ContactList/ContactList';
-import { nanoid } from 'nanoid';
-import { Filter } from './Filter/Filter';
-import css from './App.module.css';
+import { useEffect, lazy } from 'react';
 import { useDispatch } from 'react-redux';
-import { deleteContact } from 'redux/operations';
-import { addValue } from 'redux/filterSlice';
+import { Route, Routes } from 'react-router-dom';
+import { Layout } from './Layout';
+import { PrivateRoute } from './PrivateRoute';
+import { RestrictedRoute } from './RestrictedRoute';
+import { refreshUser } from 'redux/auth/operations';
+import { useAuth } from './useAuth';
+
+const HomePage = lazy(() => import('../pages/Home'));
+const RegisterPage = lazy(() => import('../pages/Register'));
+const LoginPage = lazy(() => import('../pages/Login'));
+const User = lazy(() => import('../pages/User'));
 
 export const App = () => {
-  const [contacts, setContacts] = useState([]);
-  const [filter, setFilter] = useState('');
-
   const dispatch = useDispatch();
-  const handleContactAdd = ({ name, number }) => {
-    const normalizationName = name.toLowerCase();
-
-    const alreadyInContacts = contacts.some(
-      ({ name }) => name.toLocaleLowerCase() === normalizationName
-    );
-    if (alreadyInContacts) {
-      alert(`${name} is already in contacts.`);
-      return;
-    }
-
-    const newContact = {
-      name: name,
-      number: number,
-      id: nanoid(),
-    };
-
-    setContacts(contacts => [...contacts, newContact]);
-  };
-
-  const handleFilterChange = evt => {
-    setFilter(evt.target.value);
-    const value = evt.target.value;
-    dispatch(addValue(value));
-  };
-  const handleContactsFiltered = () =>
-    contacts.filter(contact =>
-      contact.name.toLowerCase().includes(filter.toLowerCase())
-    );
-
-  const handleContactItemDelete = contactsId => {
-    setContacts(contacts.filter(contact => contact.id !== contactsId));
-    dispatch(deleteContact(contactsId));
-  };
+  const { isRefreshing } = useAuth();
 
   useEffect(() => {
-    const list = localStorage.getItem('contacts-list');
-    if (!list) return;
-    setContacts(JSON.parse(list));
-  }, []);
+    dispatch(refreshUser());
+  }, [dispatch]);
 
-  useEffect(() => {
-    const contactListStringified = JSON.stringify(contacts);
-    localStorage.setItem('contacts-list', contactListStringified);
-  }, [contacts]);
-  console.log(contacts);
-  return (
-    <div className={css.phonebook}>
-      <h1>Phonebook</h1>
-      <ContactForm onSubmit={handleContactAdd} />
-      <h2>Contacts</h2>
-      {contacts.length > 0 && (
-        <div>
-          <Filter value={filter} onChange={handleFilterChange} />
-          <ContactList
-            contacts={handleContactsFiltered()}
-            onDelete={handleContactItemDelete}
-          />
-        </div>
-      )}
-    </div>
+  return isRefreshing ? (
+    <b>Refreshing user...</b>
+  ) : (
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={<HomePage />} />
+        <Route
+          path="/register"
+          element={
+            <RestrictedRoute
+              redirectTo="/contacts"
+              component={<RegisterPage />}
+            />
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            <RestrictedRoute redirectTo="/contacts" component={<LoginPage />} />
+          }
+        />
+        <Route
+          path="/contacts"
+          element={<PrivateRoute redirectTo="/login" component={<User />} />}
+        />
+      </Route>
+    </Routes>
   );
 };
