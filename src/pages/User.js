@@ -16,7 +16,7 @@ const User = () => {
   return (
     <>
       <Helmet>
-        <title>Your tasks</title>
+        <title>Your contacts</title>
       </Helmet>
       <Phonebook />
       <div>{isLoading && 'Request in progress...'}</div>

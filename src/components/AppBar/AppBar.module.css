@@ -3,5 +3,14 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
-  border-bottom: 1px solid #2a363b;
+  background: #00c2ce;
+  padding-right: 10px;
+  background: -moz-linear-gradient(left, #00c2ce 0%, #03b3ac 50%, #2d9ec5 100%);
+  background: -webkit-linear-gradient(
+    left,
+    #00c2ce 0%,
+    #03b3ac 50%,
+    #2d9ec5 100%
+  );
+  background: linear-gradient(to right, #00c2ce 0%, #03b3ac 50%, #2d9ec5 100%);
 }
